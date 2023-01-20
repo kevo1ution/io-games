@@ -24,7 +24,13 @@ module.exports = {
     'react'
   ],
   rules: {
-    'react/jsx-indent': [2, 2, { checkAttributes: true, indentLogicalExpressions: true }]
+    'react/jsx-indent': [2, 2, { checkAttributes: true, indentLogicalExpressions: true }],
+    'react/jsx-indent-props': [2, 2],
+    'react/self-closing-comp': ['error', {
+      component: true,
+      html: true
+    }],
+    'react/jsx-closing-bracket-location': 2
   },
   settings: {
     react: {
