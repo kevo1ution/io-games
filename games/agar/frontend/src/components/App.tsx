@@ -1,7 +1,10 @@
 import React, { useEffect } from 'react'
-import { setNickname } from '../client'
-import { Box } from '@mui/material'
+import { ThemeProvider } from '@mui/material/styles'
+import { Box, Stack } from '@mui/material'
+import { Helmet } from 'react-helmet'
 import setupGame from '../game'
+import EnterGameForm from './EnterGameForm'
+import Theme from './theme'
 
 function App (): React.ReactElement {
   useEffect(() => {
@@ -11,16 +14,26 @@ function App (): React.ReactElement {
     }
   }, [])
   return (
-    <>
-      <Box
+    <ThemeProvider theme={Theme}>
+      <Helmet>
+        <title>Circles</title>
+        <meta name="author" content="github.com/kevo1ution" />
+        <meta name="description" content="clone of agar.io" />
+        <meta name="keywords" content="io games, agar.io, real-time, battle royale, web games" />
+      </Helmet>
+      <Stack
+        id="uiLayer"
         sx={{
           zIndex: 1,
           height: '100vh',
           width: '100vw',
           position: 'absolute'
         }}
-        id="uiLayer"
-      />
+        alignItems="center"
+        justifyContent="center"
+      >
+        <EnterGameForm />
+      </Stack>
       <Box
         sx={{
           zIndex: 0,
@@ -30,7 +43,7 @@ function App (): React.ReactElement {
         }}
         id="mainSceneParent" className="App"
       />
-    </>
+    </ThemeProvider>
   )
 }
 
