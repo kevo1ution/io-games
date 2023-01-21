@@ -1,3 +1,9 @@
+export interface Player {
+  id: string
+  pos: { x: number, y: number } | undefined
+  nickname: string
+}
+
 export const config = {
   map: {
     // coordinate system:
@@ -13,5 +19,8 @@ export const config = {
   view: {
     width: 20,
     height: 20,
+  },
+  server: {
+    tickTimeoutMs: 50 // 1000/50 = 20 ticks per second
   }
 }
