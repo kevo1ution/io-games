@@ -40,9 +40,6 @@ io.on('connection', (socket) => {
 // player eats player
 // player eats blob
 // player changes direction
-// onTick
-// - update positions of all players
-// - send update in positions and timestep to clients
 
 function gameLoopTick (): void {
   try {

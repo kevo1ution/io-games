@@ -1,9 +1,12 @@
 import React, { useState } from 'react'
 import { Stack, Paper, TextField, Button, CircularProgress } from '@mui/material'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
-import { spawnPlayer } from '../client'
 
-function EnterGameForm (): React.ReactElement {
+interface EnterGameFormProps {
+  spawnPlayer?: (nickname: string) => void
+}
+
+function EnterGameForm ({ spawnPlayer }: EnterGameFormProps): React.ReactElement {
   const [loading, setLoading] = useState(false)
   const [nickname, setNickname] = useState<string>('billie')
   return (
@@ -22,11 +25,15 @@ function EnterGameForm (): React.ReactElement {
         <Button
           fullWidth
           variant="contained"
-          disabled={loading}
+          disabled={loading || (spawnPlayer == null)}
           onClick={(ev) => {
             ev.preventDefault()
-            spawnPlayer(nickname)
-            setLoading(false)
+            setLoading(true)
+            if (spawnPlayer == null) {
+              throw new Error('spawnPlayer fn is not defined, is the socket connected yet?')
+            } else {
+              spawnPlayer(nickname)
+            }
           }}
         >
           {loading

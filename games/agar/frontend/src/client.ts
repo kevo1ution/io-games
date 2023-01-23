@@ -1,25 +1,42 @@
-import { io } from 'socket.io-client'
-import { Player } from 'agar-shared'
+import { useState, useEffect } from 'react'
+import { io, Socket } from 'socket.io-client'
 
-// TODO: hard coded for now for simplicity.
-const socket = io('http://localhost:3000')
+export const useSocket = (): {
+  socket?: Socket
+  spawnPlayer: (name: string) => void
+} => {
+  const [socket, setSocket] = useState<Socket | undefined>()
+  useEffect(() => {
+    // TODO: hard coded URL for simplicity; it should be dynamic based on dedicated game server
+    const newSocket = io('http://localhost:3000')
 
-socket.on('connect', () => {
-  console.log('socket successfully connected!')
-})
+    newSocket.on('connect', () => {
+      console.log('socket connected', { id: newSocket.id })
+    })
 
-socket.on('disconnect', (reason) => {
-  console.warn('socket disconnect:', { reason })
-})
+    newSocket.on('disconnect', (reason) => {
+      console.warn('socket disconnect:', { reason })
+    })
 
-socket.on('connect_error', (error) => {
-  console.error('socket connect_error:', error)
-})
+    newSocket.on('connect_error', (error) => {
+      console.error('socket connect_error:', error)
+    })
 
-socket.on('newTickState', ({ players }) => {
-  const playersMap = new Map<string, Player>(Object.entries(players))
-})
+    setSocket(newSocket)
 
-export function spawnPlayer (name: string): void {
-  socket.emit('spawnPlayer', name)
+    return () => {
+      newSocket.disconnect()
+    }
+  }, [])
+
+  return {
+    socket,
+    spawnPlayer: (name: string): void => {
+      if (socket == null) {
+        throw new Error('socket is not defined!')
+      } else {
+        socket.emit('spawnPlayer', name)
+      }
+    }
+  }
 }

@@ -4,12 +4,16 @@ export interface Player {
   nickname: string
 }
 
+export interface TickState {
+  players: Map<string, Player>
+}
+
 export const config = {
   map: {
     // coordinate system:
     // bottom left corner is (0,0) and top right corner is (width, height)
-    width: 100,
-    height: 100,
+    width: 14000,
+    height: 14000,
   },
   character: {
     initialMeterPerSecond: 1,

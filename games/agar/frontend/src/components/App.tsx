@@ -1,18 +1,16 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 import { ThemeProvider } from '@mui/material/styles'
 import { Box, Stack } from '@mui/material'
 import { Helmet } from 'react-helmet'
-import setupGame from '../game'
 import EnterGameForm from './EnterGameForm'
 import Theme from './theme'
+import { useSocket } from '../client'
+import { useGame, GameStatus } from '../game'
 
 function App (): React.ReactElement {
-  useEffect(() => {
-    const game = setupGame('mainSceneParent')
-    return () => {
-      game.destroy(true)
-    }
-  }, [])
+  const { socket, spawnPlayer } = useSocket()
+  const gameStatus = useGame(socket)
+
   return (
     <ThemeProvider theme={Theme}>
       <Helmet>
@@ -32,13 +30,11 @@ function App (): React.ReactElement {
         alignItems="center"
         justifyContent="center"
       >
-        <EnterGameForm />
+        {gameStatus === GameStatus.Lobby && <EnterGameForm spawnPlayer={spawnPlayer} />}
       </Stack>
       <Box
         sx={{
           zIndex: 0,
-          height: '100vh',
-          width: '100vw',
           position: 'absolute'
         }}
         id="mainSceneParent" className="App"
