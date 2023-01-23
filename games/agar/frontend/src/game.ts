@@ -51,11 +51,14 @@ export class MainScene extends Phaser.Scene {
         // TODO: make this work on mobile view
         // update mouse direction depending on pointer position compared to player character
         if (this.setDirection != null) {
+          // use camera to get worldPoint because the pointer.worldX and pointer.worldY does not get updated
+          // https://github.com/photonstorm/phaser/issues/4658
+          const pointerWorld = this.cameras.main.getWorldPoint(this.input.activePointer.x, this.input.activePointer.y)
           const distanceBetweenCircleAndPointer = Phaser.Math.Distance.Between(
             circle.x,
             circle.y,
-            this.input.mousePointer.worldX,
-            this.input.mousePointer.worldY
+            pointerWorld.x,
+            pointerWorld.y
           )
 
           // default angle is undefined and only set it if pointer is outside of the buffer
@@ -63,12 +66,10 @@ export class MainScene extends Phaser.Scene {
             ? Phaser.Math.Angle.Between(
               circle.x,
               circle.y,
-              this.input.mousePointer.worldX,
-              this.input.mousePointer.worldY
+              pointerWorld.x,
+              pointerWorld.y
             )
             : undefined
-
-          console.log(distanceBetweenCircleAndPointer, config.character.hoverBufferRadius, distanceBetweenCircleAndPointer > config.character.hoverBufferRadius, angle)
 
           if (this.lastDirection !== angle) {
             this.lastDirection = angle
@@ -101,7 +102,6 @@ export class MainScene extends Phaser.Scene {
       100)
     grid.setFillStyle(0xFFFFFF)
     grid.setOutlineStyle(0x111111)
-    this.input.setPollAlways()
   }
 }
 
