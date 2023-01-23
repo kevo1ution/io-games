@@ -84,12 +84,6 @@ export class MainScene extends Phaser.Scene {
   }
 
   create (): void {
-    this.cameras.main.setBounds(
-      -config.map.outOfBoundsPadding,
-      -config.map.outOfBoundsPadding,
-      config.map.width + config.map.outOfBoundsPadding,
-      config.map.height + config.map.outOfBoundsPadding
-    )
     this.physics.world.setBounds(0, 0, config.map.width, config.map.height)
 
     const grid = this.add.grid(

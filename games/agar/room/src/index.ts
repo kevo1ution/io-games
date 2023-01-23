@@ -41,24 +41,18 @@ io.on('connection', (socket) => {
   })
 })
 
-// important events/operations to handle:
-// player spawns
-// player disconnects
+// TODO: important events/operations to handle:
 // player eats player
 // player eats blob
-// player changes direction
 
 function gameLoopTick (startTimeMs: number): void {
   const newStartTimeMs = Date.now()
   const dtMs = newStartTimeMs - startTimeMs
-  console.log(dtMs)
   try {
     // update position of all players
     players.forEach((player, id) => {
       updatePlayerPositionOnTick(player, dtMs)
     })
-
-    console.log(players)
 
     const newTickState = {
       serverTimeISO: new Date().toISOString(),

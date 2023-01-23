@@ -28,10 +28,6 @@ export const config = {
     // to undefined (player no longer moving). Unit is in world space.
     hoverBufferRadius: 30,
   },
-  view: {
-    width: 20,
-    height: 20,
-  },
   server: {
     tickTimeoutMs: 50 // 1000/50 = 20 ticks per second
   }
