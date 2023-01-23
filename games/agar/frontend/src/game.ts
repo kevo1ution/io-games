@@ -108,6 +108,8 @@ export const useGame = (socket?: Socket): GameStatus => {
 
       if (players.has(socket.id)) {
         setGameStatus(GameStatus.InGame)
+      } else {
+        setGameStatus(GameStatus.Lobby)
       }
     }
     socket.on('newTickState', onNewTickState)
