@@ -4,6 +4,7 @@ import { io, Socket } from 'socket.io-client'
 export const useSocket = (): {
   socket?: Socket
   spawnPlayer: (name: string) => void
+  setDirection: (dirRadians?: number) => void
 } => {
   const [socket, setSocket] = useState<Socket | undefined>()
   useEffect(() => {
@@ -36,6 +37,13 @@ export const useSocket = (): {
         throw new Error('socket is not defined!')
       } else {
         socket.emit('spawnPlayer', name)
+      }
+    },
+    setDirection: (dirRadians?: number): void => {
+      if (socket == null) {
+        throw new Error('socket is not defined!')
+      } else {
+        socket.emit('setDirection', dirRadians)
       }
     }
   }

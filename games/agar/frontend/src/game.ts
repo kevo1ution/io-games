@@ -15,6 +15,8 @@ export class MainScene extends Phaser.Scene {
   }
 
   public plrId?: string
+  public setDirection?: (dirRadians?: number) => void
+  public lastDirection?: number
 
   private readonly playerIdToCircle = new Map<string, Phaser.GameObjects.Arc>()
 
@@ -26,10 +28,9 @@ export class MainScene extends Phaser.Scene {
   update (t: number, dt: number): void {
     // TODO: calculate interpolated/smoothing of clientTickState
     this.clientTickState = this.serverTickState
-
     const { players } = this.clientTickState
 
-    // reposition circles of all players
+    // update each of players' character based on interpolated/smoothed clientTickState
     players.forEach((player, id) => {
       if (!this.playerIdToCircle.has(id)) {
         const circle = this.add.circle(200, 400, 80, 0xff669)
@@ -41,10 +42,39 @@ export class MainScene extends Phaser.Scene {
       )
     })
 
+    // update player character
     if (this.plrId != null && this.playerIdToCircle.has(this.plrId)) {
       const circle = this.playerIdToCircle.get(this.plrId)
       if (circle != null) {
         this.cameras.main.startFollow(circle)
+
+        // TODO: make this work on mobile view
+        // update mouse direction depending on pointer position compared to player character
+        if (this.setDirection != null) {
+          const distanceBetweenCircleAndPointer = Phaser.Math.Distance.Between(
+            circle.x,
+            circle.y,
+            this.input.mousePointer.worldX,
+            this.input.mousePointer.worldY
+          )
+
+          // default angle is undefined and only set it if pointer is outside of the buffer
+          const angle = distanceBetweenCircleAndPointer > config.character.hoverBufferRadius
+            ? Phaser.Math.Angle.Between(
+              circle.x,
+              circle.y,
+              this.input.mousePointer.worldX,
+              this.input.mousePointer.worldY
+            )
+            : undefined
+
+          console.log(distanceBetweenCircleAndPointer, config.character.hoverBufferRadius, distanceBetweenCircleAndPointer > config.character.hoverBufferRadius, angle)
+
+          if (this.lastDirection !== angle) {
+            this.lastDirection = angle
+            this.setDirection(angle)
+          }
+        }
       }
     }
   }
@@ -53,6 +83,14 @@ export class MainScene extends Phaser.Scene {
   }
 
   create (): void {
+    this.cameras.main.setBounds(
+      -config.map.outOfBoundsPadding,
+      -config.map.outOfBoundsPadding,
+      config.map.width + config.map.outOfBoundsPadding,
+      config.map.height + config.map.outOfBoundsPadding
+    )
+    this.physics.world.setBounds(0, 0, config.map.width, config.map.height)
+
     const grid = this.add.grid(
       config.map.height / 2,
       config.map.width / 2,
@@ -63,6 +101,7 @@ export class MainScene extends Phaser.Scene {
       100)
     grid.setFillStyle(0xFFFFFF)
     grid.setOutlineStyle(0x111111)
+    this.input.setPollAlways()
   }
 }
 
@@ -74,6 +113,9 @@ export const createGame = (parentId: string): Phaser.Game => {
     parent: parentId,
     scale: {
       mode: Phaser.Scale.RESIZE
+    },
+    physics: {
+      default: 'arcade'
     }
   })
 }
@@ -83,7 +125,7 @@ export enum GameStatus {
   Lobby = 'Lobby'
 }
 
-export const useGame = (socket?: Socket): GameStatus => {
+export const useGame = (socket?: Socket, setDirection?: (dirRadians?: number) => void): GameStatus => {
   const [gameStatus, setGameStatus] = useState(GameStatus.Lobby)
   const [game, setGame] = useState<Phaser.Game | undefined>()
   useEffect(() => {
@@ -136,6 +178,17 @@ export const useGame = (socket?: Socket): GameStatus => {
       socket.off('connect', onConnect)
     }
   }, [socket, game])
+
+  useEffect(() => {
+    if (game != null && setDirection != null && gameStatus === GameStatus.InGame) {
+      const mainScene = game.scene.getScene('mainScene') as MainScene
+      mainScene.setDirection = setDirection
+
+      return () => {
+        mainScene.setDirection = undefined
+      }
+    }
+  }, [game, gameStatus, setDirection])
 
   return gameStatus
 }

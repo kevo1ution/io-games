@@ -1,7 +1,7 @@
 import { createServer } from 'http'
 import { Server } from 'socket.io'
 import { config, Player } from 'agar-shared'
-import { createPlayer } from './player'
+import { createPlayer, updatePlayerPositionOnTick } from './player'
 
 const httpServer = createServer()
 const io = new Server(httpServer, {
@@ -24,8 +24,15 @@ io.on('connection', (socket) => {
     }
   })
 
-  socket.on('setDirection', (dirRadians: number | undefined) => {
-
+  socket.on('setDirection', (dirRadians?: number) => {
+    console.log('set direction of player', { id, dirRadians })
+    const player = players.get(id)
+    if (player == null) {
+      console.error('player is not spawned in yet!', { id, dirRadians })
+    } else {
+      player.direction = dirRadians
+      players.set(id, player)
+    }
   })
 
   socket.on('disconnect', (reason) => {
@@ -41,9 +48,18 @@ io.on('connection', (socket) => {
 // player eats blob
 // player changes direction
 
-function gameLoopTick (): void {
+function gameLoopTick (startTimeMs: number): void {
+  const newStartTimeMs = Date.now()
+  const dtMs = newStartTimeMs - startTimeMs
+  console.log(dtMs)
   try {
-    // TODO: update positions of all players
+    // update position of all players
+    players.forEach((player, id) => {
+      updatePlayerPositionOnTick(player, dtMs)
+    })
+
+    console.log(players)
+
     const newTickState = {
       serverTimeISO: new Date().toISOString(),
       players: Object.fromEntries(players)
@@ -52,8 +68,8 @@ function gameLoopTick (): void {
   } catch (error) {
     console.error('unexpected error in the game loop!', error)
   }
-  setTimeout(gameLoopTick, config.server.tickTimeoutMs)
+  setTimeout(() => { gameLoopTick(newStartTimeMs) }, config.server.tickTimeoutMs)
 }
 
 httpServer.listen(3000)
-gameLoopTick()
+gameLoopTick(Date.now())

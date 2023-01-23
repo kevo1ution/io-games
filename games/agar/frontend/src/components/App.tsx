@@ -1,16 +1,21 @@
 import React from 'react'
 import { ThemeProvider } from '@mui/material/styles'
-import { Box, Stack } from '@mui/material'
+import { Box } from '@mui/material'
 import { Helmet } from 'react-helmet'
-import EnterGameForm from './EnterGameForm'
+import Lobby from './lobby/Lobby'
 import Theme from './theme'
 import { useSocket } from '../client'
 import { useGame, GameStatus } from '../game'
 
 function App (): React.ReactElement {
-  const { socket, spawnPlayer } = useSocket()
-  const gameStatus = useGame(socket)
+  const { socket, spawnPlayer, setDirection } = useSocket()
+  const gameStatus = useGame(socket, setDirection)
 
+  /**
+   * WARNING:
+   * Any react UI components displaying over the canvas will capture the mouse events and not propagate it to Phaser.
+   * This means that if there are any container components that have a lot of space, mouse events will not get propagated.
+   */
   return (
     <ThemeProvider theme={Theme}>
       <Helmet>
@@ -19,19 +24,7 @@ function App (): React.ReactElement {
         <meta name="description" content="clone of agar.io" />
         <meta name="keywords" content="io games, agar.io, real-time, battle royale, web games" />
       </Helmet>
-      <Stack
-        id="uiLayer"
-        sx={{
-          zIndex: 1,
-          height: '100vh',
-          width: '100vw',
-          position: 'absolute'
-        }}
-        alignItems="center"
-        justifyContent="center"
-      >
-        {gameStatus === GameStatus.Lobby && <EnterGameForm spawnPlayer={spawnPlayer} />}
-      </Stack>
+      {gameStatus === GameStatus.Lobby && <Lobby spawnPlayer={spawnPlayer} />}
       <Box
         sx={{
           zIndex: 0,
