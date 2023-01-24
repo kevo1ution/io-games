@@ -6,7 +6,8 @@ export function createPlayer (id: string, name: string): Player {
   return {
     id,
     pos: playerPos,
-    nickname: name
+    nickname: name,
+    score: config.character.initialScore
   }
 }
 
@@ -24,4 +25,10 @@ export function updatePlayerPositionOnTick (player: Player, dTimeMs: number): vo
   const dy = Math.sin(angleRads) * dDist
   player.pos.x = clamp(player.pos.x + dx, 0, config.map.width)
   player.pos.y = clamp(player.pos.y + dy, 0, config.map.height)
+}
+
+export function updatePlayerScoreDecayOnTick (player: Player, dTimeMs: number): void {
+  const dTimeSecs = (dTimeMs / 1000)
+  const decayAmnt = player.score * dTimeSecs * config.character.baseDecayPerSecond
+  player.score = Math.max(player.score + decayAmnt, config.character.initialScore)
 }

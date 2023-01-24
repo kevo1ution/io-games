@@ -1,7 +1,10 @@
 import { createServer } from 'http'
 import { Server } from 'socket.io'
-import { config, Player } from 'agar-shared'
-import { createPlayer, updatePlayerPositionOnTick } from './player'
+import { config, Player, Dot } from 'agar-shared'
+import {
+  createPlayer, updatePlayerPositionOnTick, updatePlayerScoreDecayOnTick
+} from './player'
+import { startSpawningDots } from './map'
 
 const httpServer = createServer()
 const io = new Server(httpServer, {
@@ -11,6 +14,7 @@ const io = new Server(httpServer, {
 })
 
 const players = new Map<string, Player>()
+const dots = new Map<string, Dot>()
 
 io.on('connection', (socket) => {
   const id = socket.id
@@ -25,7 +29,6 @@ io.on('connection', (socket) => {
   })
 
   socket.on('setDirection', (dirRadians?: number) => {
-    console.log('set direction of player', { id, dirRadians })
     const player = players.get(id)
     if (player == null) {
       console.error('player is not spawned in yet!', { id, dirRadians })
@@ -41,10 +44,6 @@ io.on('connection', (socket) => {
   })
 })
 
-// TODO: important events/operations to handle:
-// player eats player
-// player eats blob
-
 function gameLoopTick (startTimeMs: number): void {
   const newStartTimeMs = Date.now()
   const dtMs = newStartTimeMs - startTimeMs
@@ -52,11 +51,17 @@ function gameLoopTick (startTimeMs: number): void {
     // update position of all players
     players.forEach((player, id) => {
       updatePlayerPositionOnTick(player, dtMs)
+      updatePlayerScoreDecayOnTick(player, dtMs)
     })
+
+    // TODO: check if any players have eaten any dots
+
+    // TODO: check if any players have eaten any other players
 
     const newTickState = {
       serverTimeISO: new Date().toISOString(),
-      players: Object.fromEntries(players)
+      players: Object.fromEntries(players),
+      dots: Object.fromEntries(dots)
     }
     io.emit('newTickState', newTickState)
   } catch (error) {
@@ -67,3 +72,4 @@ function gameLoopTick (startTimeMs: number): void {
 
 httpServer.listen(3000)
 gameLoopTick(Date.now())
+startSpawningDots(dots)

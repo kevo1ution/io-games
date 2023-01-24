@@ -1,24 +1,21 @@
 import { useEffect, useState } from 'react'
 import 'phaser'
-import { config, Player, TickState } from 'agar-shared'
+import { config, Player, TickState, Dot } from 'agar-shared'
 import { Socket } from 'socket.io-client'
 
 export class MainScene extends Phaser.Scene {
-  public serverTickState: TickState = {
-    players: new Map<string, Player>()
-  }
+  public serverTickState?: TickState
 
   // Separate from serverTickState because it is interpolated and used for client side prediction
   // for smoother looking graphics
-  private clientTickState: TickState = {
-    players: new Map<string, Player>()
-  }
+  private clientTickState?: TickState
 
   public plrId?: string
   public setDirection?: (dirRadians?: number) => void
   public lastDirection?: number
 
   private readonly playerIdToCircle = new Map<string, Phaser.GameObjects.Arc>()
+  private readonly dotIdToCircle = new Map<string, Phaser.GameObjects.Arc>()
 
   constructor () {
     super('mainScene')
@@ -26,20 +23,49 @@ export class MainScene extends Phaser.Scene {
 
   // TODO: do client side prediction using circular buffer of positions/directions
   update (t: number, dt: number): void {
+    // can't do any updates or change rendering if serverTickState doesn't exist
+    if (this.serverTickState == null) {
+      return
+    }
+
     // TODO: calculate interpolated/smoothing of clientTickState
     this.clientTickState = this.serverTickState
-    const { players } = this.clientTickState
+    const { players, dots } = this.clientTickState
 
     // update each of players' character based on interpolated/smoothed clientTickState
     players.forEach((player, id) => {
       if (!this.playerIdToCircle.has(id)) {
-        const circle = this.add.circle(200, 400, 80, 0xff669)
+        const circle = this.add.circle(undefined, undefined, 80, 0xff669)
         this.playerIdToCircle.set(id, circle)
       }
 
       this.playerIdToCircle.get(id)?.setPosition(
         player.pos?.x, player.pos?.y
       )
+    })
+
+    this.playerIdToCircle.forEach((circle, id) => {
+      if (!players.has(id)) {
+        circle.destroy()
+      }
+    })
+
+    dots.forEach((dot, id) => {
+      if (!this.dotIdToCircle.has(id)) {
+        const color = new Phaser.Display.Color().random(100)
+        const circle = this.add.circle(undefined, undefined, 5, color.color)
+        this.dotIdToCircle.set(id, circle)
+      }
+
+      this.dotIdToCircle.get(id)?.setPosition(
+        dot.pos.x, dot.pos.y
+      )
+    })
+
+    this.dotIdToCircle.forEach((circle, id) => {
+      if (!dots.has(id)) {
+        circle.destroy()
+      }
     })
 
     // update player character
@@ -136,10 +162,12 @@ export const useGame = (socket?: Socket, setDirection?: (dirRadians?: number) =>
     }
 
     const onNewTickState = (newTickState: TickState): void => {
+      // TODO: only stream differences
       const players = new Map<string, Player>(Object.entries(newTickState.players))
+      const dots = new Map<string, Dot>(Object.entries(newTickState.dots))
       if (game != null) {
         const mainScene = game.scene.getScene('mainScene') as MainScene
-        mainScene.serverTickState = { ...newTickState, players }
+        mainScene.serverTickState = { ...newTickState, players, dots }
       }
 
       if (players.has(socket.id)) {
